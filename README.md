@@ -13,6 +13,31 @@ department, the on-screen text and the voiceover all get regenerated per campaig
 - **[prompt.txt](prompt.txt)** — positive + negative prompt text, mirrored from the graph for reference.
 - **[set_campaign.ps1](set_campaign.ps1)** — retarget the offer without hand-editing JSON.
 
+## Running the scripts
+
+The pipeline runs on ComfyUI's embedded Python. There is no system Python — the `python` on
+PATH is a broken WindowsApps stub — and winget put ffmpeg outside the PATH of already-open
+shells. `activate.ps1` wires up both. **Dot-source it**, or the aliases disappear with the
+child scope:
+
+```powershell
+cd C:\Users\User\Desktop\video_gen
+. .\activate.ps1
+```
+
+That gives you `comfy-py`, `ffmpeg`, `ffprobe`, and the `$ComfyRoot` / `$ComfyOutput` paths:
+
+```powershell
+comfy-py scene.py --selftest                      # resolver across sample inputs
+comfy-py scene.py --item milk --percent 30 --label item
+comfy-py comfy_client.py --stats                  # live server, VRAM, queue
+comfy-py comfy_client.py --show                   # workflow settings + SaveVideo count
+```
+
+Once per shell. Without it, invoke the interpreter by full path — `python_embeded\python.exe`
+alone resolves against the current directory, not the ComfyUI install, and PowerShell reads a
+bare relative path as a module name rather than a program.
+
 ## Retargeting the offer
 
 The on-screen graphic is specified as two lines — `SALE` on top, `<N>% OFF ON <PRODUCT>` below. To change the campaign:
