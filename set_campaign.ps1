@@ -34,9 +34,11 @@ $pos = @(
   ""
   "Confetti, balloons and colorful ribbons fill the background behind the text."
   ""
-  "Audio: an energetic, upbeat human male announcer reading out loud, The big sale is live right now! Get $Spoken! Accompanied by cheerful, fast-paced background music."
-  ""
   "Style: Modern retail commercial, premium quality, perfectly legible typography, colorful, family-friendly, cinematic lighting, smooth camera movement, vibrant colors, highly detailed, energetic motion graphics, 16:9 landscape."
+  ""
+  # Quoted, and last in the prompt. Unquoted the model reads the stage direction
+  # aloud as well -- "Accompanied by..." was spoken as "acampass".
+  "Audio: cheerful, fast-paced background music throughout, with an energetic, upbeat human male announcer reading out loud: `"The big sale is live right now! Get $Spoken!`""
 ) -join "`n"
 
 $neg = @(

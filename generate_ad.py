@@ -44,15 +44,24 @@ STYLE = (
 # somewhere to sit, and text is forbidden in as many words as the encoder will hear.
 NO_TEXT_CLAUSE = (
     "The centre of the frame is clean and uncluttered, leaving open space. "
-    "There is no text anywhere in the frame: no letters, no words, no numbers, "
-    "no signage, no posters, no banners, no price tags, no writing of any kind."
+    # Positive phrasing does more work here than the negative prompt: naming
+    # bare shelf edges and plain packaging suppresses the invented gibberish
+    # labels better than forbidding "signage" alone, and throwing the back of
+    # the store out of focus hides the worst offenders.
+    "Shelf edges are bare and completely blank, product packaging is plain and "
+    "unbranded, and the back of the store is softly out of focus with a shallow "
+    "depth of field. There is no text anywhere in the frame: no letters, no "
+    "words, no numbers, no signage, no posters, no banners, no price tags, "
+    "no labels, no writing of any kind."
 )
 
 NEG_NO_TEXT = (
     "text, letters, words, numbers, typography, signage, posters, banners, "
     "price tags, captions, subtitles, watermark, logos, writing, "
     "blurry visuals, dark lighting, low resolution, distorted products, "
-    "excessive motion blur, flickering, empty shelves, robotic voice, silent"
+    "excessive motion blur, flickering, empty shelves, "
+    "robotic voice, silent, gibberish speech, extra spoken words, "
+    "announcer reading the stage directions, mumbling"
 )
 
 NEG_IN_MODEL_TEXT = (
@@ -72,9 +81,13 @@ def build_prompts(camp: dict, in_model_text: bool) -> tuple[str, str]:
         f"{camp['scene']}. The camera glides smoothly forward through the aisle. "
         f"Bright cheerful lighting and a lively shopping atmosphere."
     )
+    # The spoken line MUST be quoted and MUST come last in the whole prompt.
+    # Unquoted, the model cannot tell where the script ends and reads the stage
+    # direction aloud too -- "Accompanied by..." came out spoken as "acampass".
     audio = (
-        f"Audio: an energetic, upbeat human male announcer reading out loud, "
-        f"{camp['vo_line']} Accompanied by cheerful, fast-paced background music."
+        f"Audio: cheerful, fast-paced background music throughout, with an "
+        f"energetic, upbeat human male announcer reading out loud: "
+        f'"{camp["vo_line"]}"'
     )
 
     if in_model_text:
@@ -95,7 +108,8 @@ def build_prompts(camp: dict, in_model_text: bool) -> tuple[str, str]:
         graphic = NO_TEXT_CLAUSE
         negative = NEG_NO_TEXT
 
-    positive = "\n\n".join([opening, graphic, audio, STYLE])
+    # Audio last, so the quoted script is the final text the encoder sees.
+    positive = "\n\n".join([opening, graphic, STYLE, audio])
     return positive, negative
 
 
