@@ -152,8 +152,12 @@ class AdHandler(BaseHTTPRequestHandler):
                 for k in ("item", "department", "percent", "line2", "duration",
                           "width", "height", "generated_at")
             )
+            # #t=2 seeks the poster frame past the opening push-in, which is the
+            # least representative moment of the clip. Needs Range support (we
+            # have it) or the browser cannot seek before playing.
             body = (f"<h1>Current ad</h1><table>{rows}</table>"
-                    f'<p><video src="/latest.mp4" controls width="640"></video></p>')
+                    f'<p><video src="/latest.mp4#t=2" controls preload="metadata" '
+                    f'width="640"></video></p>')
         else:
             body = "<h1>No ad published yet</h1><p>Run make_ad.py first.</p>"
         html = (

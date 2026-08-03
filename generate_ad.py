@@ -43,23 +43,27 @@ STYLE = (
 # Composited-text mode. The centre is deliberately kept clear so the overlay has
 # somewhere to sit, and text is forbidden in as many words as the encoder will hear.
 NO_TEXT_CLAUSE = (
+    # Fullness first, and emphatically. An earlier version said "shelf edges are
+    # bare and completely blank" to suppress invented labels; the model read
+    # "bare" as empty shelving and opened the clip on empty crates. Say what
+    # should be there, not what should be absent.
+    "Every shelf and crate is generously full and overflowing with fresh "
+    "produce, abundant and richly stocked from the very first frame, with no "
+    "empty shelves or empty crates anywhere. "
     "The centre of the frame is clean and uncluttered, leaving open space. "
-    # Positive phrasing does more work here than the negative prompt: naming
-    # bare shelf edges and plain packaging suppresses the invented gibberish
-    # labels better than forbidding "signage" alone, and throwing the back of
-    # the store out of focus hides the worst offenders.
-    "Shelf edges are bare and completely blank, product packaging is plain and "
-    "unbranded, and the back of the store is softly out of focus with a shallow "
-    "depth of field. There is no text anywhere in the frame: no letters, no "
-    "words, no numbers, no signage, no posters, no banners, no price tags, "
-    "no labels, no writing of any kind."
+    "Product packaging is plain and unbranded, and the back of the store is "
+    "softly out of focus with a shallow depth of field. There is no text "
+    "anywhere in the frame: no letters, no words, no numbers, no signage, "
+    "no posters, no banners, no price tags, no labels, no writing of any kind."
 )
 
 NEG_NO_TEXT = (
     "text, letters, words, numbers, typography, signage, posters, banners, "
     "price tags, captions, subtitles, watermark, logos, writing, "
     "blurry visuals, dark lighting, low resolution, distorted products, "
-    "excessive motion blur, flickering, empty shelves, "
+    "excessive motion blur, flickering, "
+    "empty shelves, bare shelves, empty crates, empty boxes, sparse display, "
+    "understocked, opening on an empty shelf, "
     "robotic voice, silent, gibberish speech, extra spoken words, "
     "announcer reading the stage directions, mumbling"
 )
