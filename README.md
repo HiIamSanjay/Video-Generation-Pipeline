@@ -26,7 +26,7 @@ department, the on-screen text and the voiceover all get regenerated per campaig
 The pipeline runs on ComfyUI's embedded Python. There is no system Python — the `python` on
 PATH is a broken WindowsApps stub. Two ways to invoke it, both from this directory:
 
-**`.\py` — for one-off commands.** No setup, works in PowerShell and cmd:
+**`.\py` — recommended.** No setup, and it works in **both PowerShell and cmd**:
 
 ```powershell
 .\py scene.py --selftest                          # resolver across sample inputs
@@ -35,9 +35,10 @@ PATH is a broken WindowsApps stub. Two ways to invoke it, both from this directo
 .\py comfy_client.py --show                       # workflow settings + SaveVideo count
 ```
 
-**`. .\activate.ps1` — for a working session.** Adds `ffmpeg` and `ffprobe`, which winget
+**`. .\activate.ps1` — PowerShell only, optional.** Adds `ffmpeg` and `ffprobe`, which winget
 installed outside the PATH of already-open shells, plus `$ComfyRoot` / `$ComfyOutput`. Must be
-**dot-sourced**, or the aliases vanish with the child scope:
+**dot-sourced**, or the aliases vanish with the child scope. In cmd it fails with
+`'.' is not recognized` — use `.\py` there instead:
 
 ```powershell
 . .\activate.ps1

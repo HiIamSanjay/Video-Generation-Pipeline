@@ -7,17 +7,26 @@ Operational guide. Copy-pasteable, in order. For *why* any of it works, see
 
 ## TL;DR
 
-Three things, in three windows:
+Three things, in three windows. These commands work in **both** PowerShell and
+cmd.
 
-```powershell
-# 1. Start ComfyUI (double-click run_nvidia_gpu.bat, or:)
+Window 1 — start ComfyUI (or just double-click the `.bat`):
+
+```
 C:\Users\User\Downloads\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\run_nvidia_gpu.bat
+```
 
-# 2. Make today's ad  (~10 minutes)
+Window 2 — make today's ad, about 10 minutes:
+
+```
 cd C:\Users\User\Desktop\video_gen
 .\py make_ad.py --item vegetables --percent 20
+```
 
-# 3. Serve it
+Window 3 — serve it:
+
+```
+cd C:\Users\User\Desktop\video_gen
 .\py serve.py
 ```
 
@@ -66,23 +75,44 @@ To see the GUI go to: http://127.0.0.1:8188
 
 ## Step 2 — Open a shell in the project
 
-```powershell
+```
 cd C:\Users\User\Desktop\video_gen
 ```
 
-Two ways to run the scripts — pick either:
+### Which shell are you in?
 
-```powershell
-.\py scene.py --selftest              # simplest, no setup
+Look at your prompt:
+
+| Prompt looks like | Shell |
+|---|---|
+| `PS C:\Users\User\Desktop\video_gen>` | **PowerShell** |
+| `C:\Users\User\Desktop\video_gen>` | **cmd.exe** (Command Prompt) |
+
+**`.\py` works in both.** Use it and you never have to think about this again:
+
+```
+.\py scene.py --selftest
 ```
 
+**`activate.ps1` is PowerShell-only.** It is optional — it just saves typing and
+adds `ffmpeg`/`ffprobe` to the session:
+
 ```powershell
-. .\activate.ps1                      # once per window; also gives ffmpeg/ffprobe
+. .\activate.ps1          # PowerShell ONLY. The leading dot is required.
 comfy-py scene.py --selftest
 ```
 
-The leading dot in `. .\activate.ps1` is required. Without it the aliases are
-created in a child scope and vanish immediately.
+In cmd that gives `'.' is not recognized as an internal or external command`.
+Either switch to PowerShell (type `powershell` and press Enter) or just use
+`.\py`.
+
+The leading dot is not decoration — it dot-sources the script into your current
+session. Without it the aliases are created in a child scope and vanish the
+instant it exits.
+
+> **Pasting note:** examples below are written for PowerShell, and several have
+> trailing `# comments`. cmd does not understand `#` and will either error or
+> pass it to the script as an argument. Paste the command only, not the comment.
 
 > Never run `python_embeded\python.exe ...` — that path is relative to the
 > ComfyUI install, not this folder, and PowerShell reads a bare relative path as
@@ -304,6 +334,9 @@ Task Scheduler with "At startup", or NSSM to run them as services.
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| `'.' is not recognized as an internal or external command` | you are in **cmd**, and `activate.ps1` is PowerShell-only | use `.\py <script>`, or type `powershell` first |
+| `'comfy-py' is not recognized...` | `activate.ps1` never ran (or ran in cmd) | use `.\py <script>` instead — works in both shells |
+| `unrecognized arguments: #` | pasted a trailing `# comment` into cmd | paste the command only |
 | `The module 'python_embeded' could not be loaded` | ran `python_embeded\python.exe` from the project folder | use `.\py <script>` |
 | `python` opens Microsoft Store | the PATH `python` is a broken stub | use `.\py` |
 | `Is ComfyUI running on http://127.0.0.1:8188?` | server not started | run `run_nvidia_gpu.bat` |
