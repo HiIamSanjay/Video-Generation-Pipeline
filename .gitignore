@@ -12,3 +12,5 @@ out/
 plates/
 __pycache__/
 renders/
+_preview*.png
+_preview_bg.png
