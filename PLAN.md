@@ -19,7 +19,9 @@ Out comes a finished 10-second 16:9 ad: the relevant section of the store on scr
 | One product on sale per store per day | One render per day. No plate cache, no department library to pre-render. |
 | A 10-minute render is acceptable | Generate fresh each time. Simplicity beats caching. |
 | No separate video per department | Nothing is pre-built; the scene is derived from today's item. |
-| LTX generates the audio itself | **No TTS engine.** The voiceover comes from the model. |
+| LTX generates the audio itself | **No TTS engine.** The voiceover comes from the model — confirmed intelligible and accepted. |
+| Video must be reachable over a Cloudflare Tunnel | A delivery phase: serve `out/` over local HTTP, front it with `cloudflared`, expose stable URLs. |
+| Store API payload shape not yet known | Input is kept behind a thin adapter. The pipeline takes `-Item` / `-Percent` directly; the adapter is written once the payload is known. |
 
 ## Architecture
 
@@ -44,6 +46,12 @@ store API  →  { item: X, percent: N }
                      │
                      ▼
                 out/<X>_<N>_<date>.mp4
+                     │
+                     ▼
+        5. local HTTP server  →  cloudflared tunnel
+                     │
+                     ▼
+        https://<host>/latest.mp4   ← in-store display polls this
 ```
 
 ### The one real design decision: text is burned in, not generated
@@ -114,21 +122,55 @@ An `-InModelText` flag will keep the current behaviour available for comparison.
 - Thin adapter for the store API's real payload shape, plus a `-DryRun` that prints the
   generated prompt without queueing.
 
-### Phase 5 — Documentation
+### Phase 5 — Delivery over Cloudflare Tunnel
+
+- **Local server.** Serve the finished ads over HTTP on `127.0.0.1` using the portable
+  install's embedded Python (`http.server`) — already present, no new dependency.
+- **Stable endpoints**, so the display never needs its URL changed:
+  - `GET /latest.mp4` — today's ad
+  - `GET /manifest.json` — `{ item, percent, generated_at, duration, url, sha256 }`, so a
+    client can detect a new ad without downloading the video
+- **Serve only `out/`.** The server root is scoped to the output directory, read-only, with
+  directory listing off. A tunnel pointed at a broader root would expose the machine.
+- **Cache correctness.** Dated filenames (`/ads/vegetables_20_2026-08-03.mp4`) with
+  `latest.mp4` as the pointer, and `Cache-Control: no-store` on the manifest — otherwise the
+  display can keep playing yesterday's ad from cache.
+- **`cloudflared`** (`winget install Cloudflare.cloudflared`) fronts the local server. Two modes:
+
+  | | Quick tunnel | Named tunnel |
+  |---|---|---|
+  | Setup | none — `cloudflared tunnel --url http://127.0.0.1:8787` | Cloudflare account + a domain |
+  | URL | random `*.trycloudflare.com` | stable hostname you control |
+  | Survives restart | no, URL changes | yes |
+  | Use | testing the pipeline | production — the display needs a fixed URL |
+
+- **Note:** starting a tunnel publishes this machine's server to the public internet. I will not
+  create one without an explicit go-ahead, and the quick tunnel is the right first step so
+  nothing is bound to your domain while we are still testing.
+
+### Phase 6 — Documentation
 
 - README: running a daily campaign, adding a department, tuning a scene description,
-  troubleshooting a failed render.
+  restarting the tunnel, troubleshooting a failed render.
+
+## Resolved
+
+- **Voiceover** — LTX's generated speech is intelligible and accepted. No TTS.
+- **Departments** — not known yet, so Phase 1 ships a starter library for common grocery and
+  general-store sections plus a `general` aisle fallback. Any unrecognised item still produces a
+  working ad; entries get added and tuned as the real item list emerges. Not a blocker.
+- **Double render** — fixed in `2c0eaf5` by muting `SaveVideo` #4823. Only
+  `1.LTX_2.3_Workflow.json` carries the fix; the API export in Phase 0 must come from that file.
 
 ## Open decisions
 
-1. **Department list.** What sections does the store actually have — or a sample of real API
-   payloads? The scene descriptions are hand-tuned per department, and that is what makes the
-   produce aisle look like a produce aisle. A `general` fallback covers anything unlisted.
-2. **Unknown items.** For an item with no entry, either use the generic fallback scene (free,
-   instant, less specific) or call the Claude API to write a scene description on the fly
-   (better visuals for long-tail items, needs an API key). The fallback is fine for v1.
-3. **Overlay vs in-model text.** Recommending overlay as the default for the reasons above,
-   with `-InModelText` retained as a flag. Confirm.
+1. **Overlay vs in-model text.** Recommending overlay as the default for the reasons above, with
+   `-InModelText` retained as a flag for comparison. Confirm.
+2. **Tunnel mode.** Quick tunnel for testing (zero setup, random URL), then a named tunnel for
+   production. A named tunnel needs a Cloudflare account and a domain — say whether you have
+   those, and whether the display can be pointed at a `trycloudflare.com` URL in the meantime.
+3. **Trigger.** Does the pipeline run on a daily schedule (Task Scheduler at a set hour), or
+   on-demand when the store API is polled and reports a new offer?
 
 ## Measured facts this plan is built on
 
