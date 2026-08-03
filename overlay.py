@@ -168,6 +168,64 @@ def probe(ffmpeg: str, video: Path) -> dict:
             "frames": frames, "duration": duration}
 
 
+def composite(
+    video: Path,
+    line1: str,
+    line2: str,
+    out: Path | None = None,
+    font: str = "ariblk.ttf",
+    size1: int = 196,
+    size2: int = 76,
+    pop_at: float = 0.35,
+    scrim_strength: int = 105,
+    crf: int = 18,
+    quiet: bool = False,
+) -> Path:
+    """Burn the two lines onto `video`. Returns the written path."""
+    ffmpeg = find_ffmpeg()
+    info = probe(ffmpeg, video)
+    W, H = info["w"], info["h"]
+
+    sprites = {
+        "line1": make_sprite(line1, font, size1, RED, GOLD, 11, int(W * 0.72)),
+        "line2": make_sprite(line2, font, size2, WHITE, RED, 6, int(W * 0.80)),
+    }
+    y1 = int(H * 0.38)
+    gap = int(H * 0.035)
+    y2 = y1 + sprites["line1"].height // 2 + gap + sprites["line2"].height // 2
+    timing = {"t1": pop_at, "dur1": 0.42, "t2": pop_at + 0.30, "dur2": 0.40,
+              "y1": y1, "y2": y2}
+    bg = (scrim(W, H, (y1 + y2) // 2, int(H * 0.34), scrim_strength)
+          if scrim_strength > 0 else Image.new("RGBA", (W, H), (0, 0, 0, 0)))
+
+    OUT.mkdir(exist_ok=True)
+    dest = out or OUT / video.name
+    cmd = [
+        ffmpeg, "-y", "-v", "error", *(() if quiet else ("-stats",)),
+        "-i", str(video),
+        "-f", "rawvideo", "-pix_fmt", "rgba", "-s", f"{W}x{H}",
+        "-r", f"{info['fps']:.6f}", "-i", "-",
+        "-filter_complex", "[0:v][1:v]overlay=0:0:format=auto",
+        "-c:v", "libx264", "-crf", str(crf), "-pix_fmt", "yuv420p",
+        "-c:a", "copy", "-movflags", "+faststart",
+        "-frames:v", str(info["frames"]), str(dest),
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    try:
+        for i in range(info["frames"]):
+            proc.stdin.write(
+                compose_frame(i / info["fps"], (W, H), sprites, timing, bg).tobytes()
+            )
+    except BrokenPipeError:
+        pass
+    finally:
+        if proc.stdin:
+            proc.stdin.close()
+    if proc.wait() != 0:
+        raise SystemExit("ffmpeg failed while compositing")
+    return dest
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--meta", type=Path, help="campaign JSON from generate_ad.py")
@@ -230,32 +288,10 @@ def main() -> int:
         print(f"  -> {dest}")
         return 0
 
-    OUT.mkdir(exist_ok=True)
-    dest = args.out or OUT / video.name
-    cmd = [
-        ffmpeg, "-y", "-v", "error", "-stats",
-        "-i", str(video),
-        "-f", "rawvideo", "-pix_fmt", "rgba", "-s", f"{W}x{H}",
-        "-r", f"{info['fps']:.6f}", "-i", "-",
-        "-filter_complex", "[0:v][1:v]overlay=0:0:format=auto",
-        "-c:v", "libx264", "-crf", str(args.crf), "-pix_fmt", "yuv420p",
-        "-c:a", "copy", "-movflags", "+faststart",
-        "-frames:v", str(info["frames"]), str(dest),
-    ]
-    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    try:
-        for i in range(info["frames"]):
-            f = compose_frame(i / info["fps"], (W, H), sprites, timing, bg)
-            proc.stdin.write(f.tobytes())
-    except BrokenPipeError:
-        pass
-    finally:
-        if proc.stdin:
-            proc.stdin.close()
-    if proc.wait() != 0:
-        print("ffmpeg failed", file=sys.stderr)
-        return 1
-
+    dest = composite(
+        video, line1, line2, out=args.out, font=args.font, size1=args.size1,
+        size2=args.size2, pop_at=args.pop_at, scrim_strength=args.scrim, crf=args.crf,
+    )
     print(f"  -> {dest}")
     return 0
 

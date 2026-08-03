@@ -119,6 +119,87 @@ def campaign_seed(item: str, percent: int) -> int:
     return int.from_bytes(h[:4], "big") % (2**31)
 
 
+def render_campaign(
+    item: str,
+    percent: int,
+    label: str = "department",
+    in_model_text: bool = False,
+    allow_llm: bool = True,
+    seed: int | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    frames: int | None = None,
+    smoke: bool = False,
+    server: str = cc.DEFAULT_SERVER,
+    timeout: float = 3600.0,
+) -> dict:
+    """Render one campaign. Returns the metadata dict, with 'render_path' added."""
+    camp = sc.build(item, percent, label=label, allow_llm=allow_llm)
+    positive, negative = build_prompts(camp, in_model_text)
+    if seed is None:
+        seed = campaign_seed(item, percent)
+
+    wf = copy.deepcopy(cc.load_workflow())
+    cc.patch(wf, cc.NODE["positive"], text=positive)
+    cc.patch(wf, cc.NODE["negative"], text=negative)
+    cc.patch(wf, cc.NODE["seed"], noise_seed=seed)
+    cc.patch(wf, cc.NODE["save"], filename_prefix=f"ad_{camp['key']}_{percent}")
+
+    if smoke:
+        cc.patch(wf, cc.NODE["latent"], width=320, height=192)
+        cc.patch(wf, cc.NODE["frames"], value=25)
+    else:
+        if width or height:
+            cur = wf[cc.NODE["latent"]]["inputs"]
+            w, h = width or cur["width"], height or cur["height"]
+            if w % 32 or h % 32:
+                raise SystemExit(f"{w}x{h}: both dimensions must be divisible by 32")
+            cc.patch(wf, cc.NODE["latent"], width=w, height=h)
+        if frames:
+            if (frames - 1) % 8:
+                raise SystemExit(f"{frames} frames: needs (frames-1) % 8 == 0")
+            cc.patch(wf, cc.NODE["frames"], value=frames)
+
+    print(f"{item} @ {percent}%  ->  {camp['key']}  ({camp['source']})")
+    print(f"  {cc.describe(wf)}")
+    print(f"  on-screen: {camp['line1']} / {camp['line2']}"
+          + ("  [long]" if camp["line2_long"] else ""))
+
+    client = cc.ComfyClient(server)
+    prompt_id = client.submit(wf)
+    print(f"  prompt_id {prompt_id}")
+    entry = client.wait(prompt_id, timeout=timeout)
+
+    files = [f for f in client.outputs(entry) if f["filename"].lower().endswith(".mp4")]
+    if not files:
+        raise cc.ComfyError("render completed but produced no mp4")
+
+    RENDERS.mkdir(exist_ok=True)
+    stamp = dt.date.today().isoformat()
+    base = f"{camp['key']}_{percent}_{stamp}"
+    dest = client.download(files[0], RENDERS)
+    final = RENDERS / f"{base}.mp4"
+    if dest != final:
+        shutil.move(str(dest), final)
+
+    meta = {
+        **camp,
+        "item_input": item,
+        "seed": seed,
+        "in_model_text": in_model_text,
+        "prompt_id": prompt_id,
+        "rendered": stamp,
+        "render": final.name,
+        "positive": positive,
+        "negative": negative,
+    }
+    (RENDERS / f"{base}.json").write_text(
+        json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    print(f"  -> {final}")
+    return {**meta, "render_path": final, "meta_path": RENDERS / f"{base}.json"}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--item", required=True)
@@ -152,70 +233,16 @@ def main() -> int:
         print(f"\n----- NEGATIVE -----\n{negative}")
         return 0
 
-    wf = copy.deepcopy(cc.load_workflow())
-    cc.patch(wf, cc.NODE["positive"], text=positive)
-    cc.patch(wf, cc.NODE["negative"], text=negative)
-    cc.patch(wf, cc.NODE["seed"], noise_seed=seed)
-    prefix = f"ad_{camp['key']}_{args.percent}"
-    cc.patch(wf, cc.NODE["save"], filename_prefix=prefix)
-
-    if args.smoke:
-        cc.patch(wf, cc.NODE["latent"], width=320, height=192)
-        cc.patch(wf, cc.NODE["frames"], value=25)
-    else:
-        if args.width or args.height:
-            cur = wf[cc.NODE["latent"]]["inputs"]
-            w, h = args.width or cur["width"], args.height or cur["height"]
-            if w % 32 or h % 32:
-                raise SystemExit(f"{w}x{h}: both dimensions must be divisible by 32")
-            cc.patch(wf, cc.NODE["latent"], width=w, height=h)
-        if args.frames:
-            if (args.frames - 1) % 8:
-                raise SystemExit(f"{args.frames} frames: needs (frames-1) % 8 == 0")
-            cc.patch(wf, cc.NODE["frames"], value=args.frames)
-
-    print(f"{args.item} @ {args.percent}%  ->  {camp['key']}  ({camp['source']})")
-    print(f"  {cc.describe(wf)}")
-    print(f"  on-screen: {camp['line1']} / {camp['line2']}"
-          + ("  [long]" if camp["line2_long"] else ""))
-
-    client = cc.ComfyClient(args.server)
-    prompt_id = client.submit(wf)
-    print(f"  prompt_id {prompt_id}")
-    entry = client.wait(prompt_id, timeout=args.timeout)
-
-    files = [f for f in client.outputs(entry) if f["filename"].lower().endswith(".mp4")]
-    if not files:
-        print("render completed but produced no mp4", file=sys.stderr)
-        return 1
-
-    RENDERS.mkdir(exist_ok=True)
-    stamp = dt.date.today().isoformat()
-    base = f"{camp['key']}_{args.percent}_{stamp}"
-    dest = client.download(files[0], RENDERS)
-    final = RENDERS / f"{base}.mp4"
-    if dest != final:
-        shutil.move(str(dest), final)
-
-    meta = {
-        **camp,
-        "item_input": args.item,
-        "seed": seed,
-        "in_model_text": args.in_model_text,
-        "prompt_id": prompt_id,
-        "rendered": stamp,
-        "render": final.name,
-        "positive": positive,
-        "negative": negative,
-    }
-    (RENDERS / f"{base}.json").write_text(
-        json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    result = render_campaign(
+        args.item, args.percent, label=args.label, in_model_text=args.in_model_text,
+        allow_llm=not args.no_llm, seed=args.seed, width=args.width,
+        height=args.height, frames=args.frames, smoke=args.smoke,
+        server=args.server, timeout=args.timeout,
     )
-
-    print(f"  -> {final}")
-    print(f"  -> {final.with_suffix('.json').name}  (campaign metadata for Phase 3)")
+    print(f"  -> {result['meta_path'].name}  (campaign metadata for overlay.py)")
     if args.json:
-        print(json.dumps(meta, indent=2, ensure_ascii=False))
+        printable = {k: (str(v) if isinstance(v, Path) else v) for k, v in result.items()}
+        print(json.dumps(printable, indent=2, ensure_ascii=False))
     return 0
 
 
