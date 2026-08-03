@@ -3,3 +3,6 @@
 
 # ComfyUI run output
 output/
+
+# Local Claude Code settings
+.claude/

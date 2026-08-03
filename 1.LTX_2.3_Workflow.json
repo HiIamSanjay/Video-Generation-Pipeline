@@ -89,7 +89,7 @@
       "widgets_values": [
         960,
         544,
-        121,
+        241,
         1
       ]
     },
@@ -206,8 +206,8 @@
         "Node name for S&R": "LTXVEmptyLatentAudio"
       },
       "widgets_values": [
-        97,
-        25,
+        241,
+        24,
         1
       ]
     },
@@ -1104,7 +1104,6 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            11002,
             13352
           ]
         },
@@ -1586,7 +1585,7 @@
         "Node name for S&R": "PrimitiveInt"
       },
       "widgets_values": [
-        121,
+        241,
         "fixed"
       ]
     },
@@ -1724,7 +1723,7 @@
         "Node name for S&R": "LoraLoaderModelOnly"
       },
       "widgets_values": [
-        "ltxv\\ltx2\\ltx-2.3-22b-distilled-lora-384-1.1.safetensors",
+        "ltxv/ltx2/ltx-2.3-22b-distilled-lora-384-1.1.safetensors",
         0.5
       ]
     },
@@ -1764,7 +1763,7 @@
         "Node name for S&R": "LoraLoaderModelOnly"
       },
       "widgets_values": [
-        "ltxv\\ltx2\\ltx-2.3-22b-distilled-lora-384-1.1.safetensors",
+        "ltxv/ltx2/ltx-2.3-22b-distilled-lora-384-1.1.safetensors",
         0.2
       ]
     },
@@ -1920,7 +1919,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "Negative Prompt: Duplicated text,incorect spelling,  repeated numbers, multiple 20s, blurry visuals, dark lighting, cluttered layout, unreadable text, misspelled words, gibberish text, low resolution, watermark, distorted toys, excessive motion blur, flickering, crowded text, distracting backgrounds, robotic voice, silent."
+        "duplicated text, repeated numbers, multiple 20s, incorrect spelling, misspelled words, gibberish text, unreadable text, crowded text, cluttered layout, distracting backgrounds, blurry visuals, dark lighting, low resolution, watermark, distorted toys, excessive motion blur, flickering, robotic voice, silent"
       ],
       "color": "#322",
       "bgcolor": "#533"
@@ -1938,7 +1937,7 @@
       ],
       "flags": {},
       "order": 41,
-      "mode": 0,
+      "mode": 2,
       "inputs": [
         {
           "name": "video",
@@ -1987,14 +1986,6 @@
       0,
       3159,
       1,
-      "IMAGE"
-    ],
-    [
-      11002,
-      2004,
-      0,
-      2653,
-      0,
       "IMAGE"
     ],
     [
