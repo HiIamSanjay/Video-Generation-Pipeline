@@ -16,27 +16,32 @@ department, the on-screen text and the voiceover all get regenerated per campaig
 ## Running the scripts
 
 The pipeline runs on ComfyUI's embedded Python. There is no system Python — the `python` on
-PATH is a broken WindowsApps stub — and winget put ffmpeg outside the PATH of already-open
-shells. `activate.ps1` wires up both. **Dot-source it**, or the aliases disappear with the
-child scope:
+PATH is a broken WindowsApps stub. Two ways to invoke it, both from this directory:
+
+**`.\py` — for one-off commands.** No setup, works in PowerShell and cmd:
 
 ```powershell
-cd C:\Users\User\Desktop\video_gen
+.\py scene.py --selftest                          # resolver across sample inputs
+.\py scene.py --item milk --percent 30 --label item
+.\py comfy_client.py --stats                      # live server, VRAM, queue
+.\py comfy_client.py --show                       # workflow settings + SaveVideo count
+```
+
+**`. .\activate.ps1` — for a working session.** Adds `ffmpeg` and `ffprobe`, which winget
+installed outside the PATH of already-open shells, plus `$ComfyRoot` / `$ComfyOutput`. Must be
+**dot-sourced**, or the aliases vanish with the child scope:
+
+```powershell
 . .\activate.ps1
+comfy-py scene.py --selftest
+ffprobe -i "$ComfyOutput\output_D_00006_.mp4"
 ```
 
-That gives you `comfy-py`, `ffmpeg`, `ffprobe`, and the `$ComfyRoot` / `$ComfyOutput` paths:
+Both honour `COMFY_PYTHON` if the portable install lives somewhere else.
 
-```powershell
-comfy-py scene.py --selftest                      # resolver across sample inputs
-comfy-py scene.py --item milk --percent 30 --label item
-comfy-py comfy_client.py --stats                  # live server, VRAM, queue
-comfy-py comfy_client.py --show                   # workflow settings + SaveVideo count
-```
-
-Once per shell. Without it, invoke the interpreter by full path — `python_embeded\python.exe`
-alone resolves against the current directory, not the ComfyUI install, and PowerShell reads a
-bare relative path as a module name rather than a program.
+> Why not `python_embeded\python.exe` directly? That path resolves against the current
+> directory, not the ComfyUI install, and PowerShell reads a bare relative path as a module
+> name rather than a program — hence `The module 'python_embeded' could not be loaded`.
 
 ## Retargeting the offer
 
