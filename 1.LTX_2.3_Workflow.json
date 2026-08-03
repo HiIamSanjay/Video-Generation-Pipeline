@@ -87,8 +87,8 @@
         "Node name for S&R": "EmptyLTXVLatentVideo"
       },
       "widgets_values": [
-        960,
-        544,
+        1280,
+        704,
         241,
         1
       ]
@@ -1491,7 +1491,7 @@
       ],
       "flags": {},
       "order": 43,
-      "mode": 0,
+      "mode": 2,
       "inputs": [
         {
           "name": "video",
@@ -1937,7 +1937,7 @@
       ],
       "flags": {},
       "order": 41,
-      "mode": 2,
+      "mode": 0,
       "inputs": [
         {
           "name": "video",

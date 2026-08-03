@@ -33,12 +33,12 @@ Keep LoRA paths written with **forward slashes** — backslashes break on non-Wi
 
 ```
 CheckpointLoaderSimple (ltx-2.3-22b-dev)
-  ├─ MODEL → LoraLoader #4968 @0.2 → MultimodalGuider → SamplerCustomAdvanced #4802 → output_F   [ACTIVE]
-  ├─ MODEL → LoraLoader #4922 @0.5 → CFGGuider(cfg 1) → SamplerCustomAdvanced #4829 → output_D   [MUTED]
+  ├─ MODEL → LoraLoader #4968 @0.2 → MultimodalGuider → SamplerCustomAdvanced #4802 → output_F   [MUTED]
+  ├─ MODEL → LoraLoader #4922 @0.5 → CFGGuider(cfg 1) → SamplerCustomAdvanced #4829 → output_D   [ACTIVE]
   └─ VAE  → image conditioning + 2x LTXVTiledVAEDecode
 
 LTXAVTextEncoderLoader (gemma_3_12B_it) → CLIPTextEncode x2 → LTXVConditioning (24 fps)
-EmptyLTXVLatentVideo (960x544, length←241) ─┐
+EmptyLTXVLatentVideo (1280x704, length←241) ─┐
 LTXVEmptyLatentAudio (length←241, rate←24) ─┴→ LTXVConcatAVLatent → sampler
    → LTXVSeparateAVLatent → TiledVAEDecode + AudioVAEDecode → CreateVideo → SaveVideo
 ```
@@ -49,7 +49,7 @@ LTXVEmptyLatentAudio (length←241, rate←24) ─┴→ LTXVConcatAVLatent → 
 |---|---|---|
 | `PrimitiveInt` #4979 | number of frames | **241** (= 10.04 s; must be 8n+1) |
 | `PrimitiveFloat` #4978 | fps — feeds conditioning, audio rate, and CreateVideo | **24** |
-| `EmptyLTXVLatentVideo` #3059 | output resolution | **960 x 544** |
+| `EmptyLTXVLatentVideo` #3059 | output resolution | **1280 x 704** (both dims must be divisible by 32) |
 | `PrimitiveBoolean` #4977 | **t2v / i2v switch** → `bypass` input of #3159 | `True` = text-to-video |
 | `LTXVImgToVideoConditionOnly` #3159 | first-frame conditioning strength | 0.7 (inactive while bypassed) |
 
@@ -57,10 +57,21 @@ LTXVEmptyLatentAudio (length←241, rate←24) ─┴→ LTXVConcatAVLatent → 
 
 **Text-to-video vs image-to-video:** flip `PrimitiveBoolean` #4977. `True` bypasses the image conditioning inside #3159 (current setting). Set `False` and load a first frame in `LoadImage` #2004 for i2v. Leave the `LoadImage` / `Resize` / `LTXVPreprocess` chain enabled either way — #3159 requires a connected `IMAGE` input even when bypassed, so muting those nodes fails validation.
 
-**Two sampler branches:** `output_F` ("Generate Full", 15-step `ClownSampler_Beta` + `MultimodalGuider` with separate AUDIO/VIDEO guidance) is active. `output_D` ("Generate Distilled", 8-step `ManualSigmas` + cfg 1) is faster but has no audio-specific guidance; its `SaveVideo` #4852 is muted (`mode: 2`), which prunes that whole branch. Unmute it to A/B the two samplers at ~2x the runtime.
+**Resolution:** both dimensions must be divisible by 32, so true 720p (1280x720) is **not** a legal latent size — 720/32 = 22.5. Use `1280x704` (1.82:1, current) or `1536x864` / `1024x576` for exact 16:9. Watch the aspect ratio when changing one dimension: `1280x544` is 2.35:1 ultra-wide, not 16:9, and will letterbox or crop on a 16:9 display.
+
+**Two sampler branches — iterate on Distilled, ship on Full.**
+
+| | `output_D` — "Generate Distilled" | `output_F` — "Generate Full" |
+|---|---|---|
+| Sampler | 8-step `ManualSigmas`, `euler_ancestral_cfg_pp` | 15-step `LTXVScheduler` + `ClownSampler_Beta` on `res_2s` |
+| Guider | `CFGGuider` cfg 1 (1 pass/step) | `MultimodalGuider` cfg 28, separate AUDIO/VIDEO guidance |
+| Cost | baseline | roughly 5-7x — `res_2s` is a 2-stage solver and cfg 28 needs cond+uncond |
+| State | **ACTIVE** (`SaveVideo` #4852) | **MUTED** (`SaveVideo` #4823, `mode: 2`) |
+
+Muting a `SaveVideo` prunes its entire exclusive upstream chain, so only the active branch costs anything. Distilled is the default because at 1280x704 / 241 frames the Full branch runs for hours — too slow to iterate on prompt wording or text legibility. Swap the two `mode` values for the final render, where the Full branch's audio-specific guidance is worth the wait. **Never leave both active** — the template ships that way and silently doubles every queue.
 
 ## Known limitations
 
-- **Resolution is 960x544**, not the "4K UHD" the prompt asks for — that phrase is a style token only. Raising the latent on a 22B model costs VRAM; an upscale pass is usually the cheaper route for a large in-store display.
+- **Resolution is 1280x704**, not the "4K UHD" the prompt asks for — that phrase is a style token only. Render at this size and upscale in post; pushing the latent higher on a 22B model costs VRAM and time superlinearly.
 - **On-screen text is unreliable.** The prompt requests exact glyphs (`20% OFF TOYS`) and negative prompts do not reliably suppress duplicated or misspelled text. Compositing the price graphic over a clean generated plate is far more dependable than fighting the sampler.
 - Seeds are fixed (42 / 43) — set them to `randomize` when exploring variations.
