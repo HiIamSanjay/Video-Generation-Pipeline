@@ -72,7 +72,12 @@ Audio is untouched: LTX still generates the voiceover and music, so removing the
 text costs nothing on the audio side. Removing text from the prompt also frees the model to
 spend its capacity on the scene, which should improve the visuals.
 
-An `-InModelText` flag will keep the current behaviour available for comparison.
+An `-in-model-text` flag keeps the current behaviour available for comparison.
+
+**This is reversible at any time in ComfyUI.** The overlay approach only changes the positive
+prompt (it asks for no text) and adds an ffmpeg step. To go back, restore the
+`Line 1 reads: SALE` block in node `2483` and skip the overlay — or pass the flag. Nothing about
+the graph is permanently committed to either approach.
 
 ## Phases
 
@@ -89,11 +94,25 @@ An `-InModelText` flag will keep the current behaviour available for comparison.
 
 ### Phase 1 — Item → scene resolution *(no rendering)*
 
-- `items.json` — for each known department: aliases, display name, grammar flags, and a tuned
-  scene description. Example for `vegetables`: *"fresh produce section, crates of tomatoes,
-  peppers and leafy greens, misted and glistening, bright market lighting"*.
-- Resolver: item string → entry, via alias match, then fuzzy match, then a `general` store-aisle
-  fallback so an unrecognised item never hard-fails.
+Since the item list is not known in advance, scene descriptions are generated rather than
+hand-maintained, with a curated layer in front for items we have already tuned.
+
+1. **Curated first.** `items.json` — for departments we have dialled in: aliases, display name,
+   grammar flags, and a tuned scene description. Example for `vegetables`: *"fresh produce
+   section, crates of tomatoes, peppers and leafy greens, misted and glistening, bright market
+   lighting"*. Deterministic and reproducible for anything that recurs.
+2. **LLM expansion for anything unlisted.** Call the Claude API to write a scene description for
+   an arbitrary item, then cache the result back into `items.json` so the same item is
+   deterministic next time.
+3. **Generic aisle fallback** if the API is unreachable, so a render never hard-fails.
+
+**The LLM writes the scene description only** — not the whole prompt. The no-text instruction,
+the voiceover line, the style block, and the negative prompt stay under our control and are
+assembled around whatever it returns. Its system prompt must state explicitly that the frame
+contains no text, signage or lettering; left unconstrained, an LLM will happily write "a neon
+sign flashes 20% OFF TOYS" and reintroduce the exact defect the overlay exists to remove.
+
+Also in this phase:
 - Grammar: mass nouns must not be pluralised — "20% off on rice", never "rices".
 - Number-to-words for the voiceover line: `25` → "twenty five percent".
 
@@ -148,6 +167,21 @@ An `-InModelText` flag will keep the current behaviour available for comparison.
   create one without an explicit go-ahead, and the quick tunnel is the right first step so
   nothing is bound to your domain while we are still testing.
 
+> **Do not tunnel ComfyUI (port 8188) itself.**
+>
+> ComfyUI ships with no authentication. Anyone who obtains the URL can queue jobs on the GPU,
+> browse and download everything in `output/`, and — via custom nodes and known path-traversal
+> issues — read and write files on the host. A `trycloudflare.com` hostname is not a secret;
+> such hostnames get scanned. "Secure tunnel" describes the transport, not the service behind it.
+>
+> The store system does not need to reach ComfyUI — it needs to submit an offer and collect a
+> video. So the tunnel fronts a **read-only static server scoped to `out/`**, and ComfyUI stays
+> bound to `127.0.0.1`.
+>
+> If remote *triggering* is needed later, the correct shape is a small API of our own behind a
+> shared secret, which validates the payload and then talks to ComfyUI over localhost. Port 8188
+> is never exposed.
+
 ### Phase 6 — Documentation
 
 - README: running a daily campaign, adding a department, tuning a scene description,
@@ -185,4 +219,15 @@ An `-InModelText` flag will keep the current behaviour available for comparison.
 | ffmpeg | Not installed — Phase 0 |
 | Output directory | `ComfyUI_windows_portable\ComfyUI\output\` |
 
-Scripting in PowerShell throughout, consistent with `set_campaign.ps1`. No new runtime needed.
+## Implementation language: Python
+
+A migration to an Ubuntu partition is planned, so the pipeline is written in **Python**, not
+PowerShell. It runs unchanged on both, and the portable install already bundles Python 3.13.14,
+so there is nothing to install on Windows today. (The PATH `python` is a broken WindowsApps stub —
+scripts must invoke `python_embeded\python.exe` explicitly, or a real interpreter once on Ubuntu.)
+
+`set_campaign.ps1` stays as-is for manual one-off prompt edits; it is not part of the pipeline.
+
+**Carry-forward for the Ubuntu move:** the LoRA paths in nodes #4922 and #4968 must switch from
+backslashes to forward slashes, since ComfyUI builds that combo list with `os.sep`. This is the
+exact reverse of the fix in `c8f70fa` — see the README.
