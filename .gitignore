@@ -6,3 +6,8 @@ output/
 
 # Local Claude Code settings
 .claude/
+
+# Pipeline artifacts
+out/
+plates/
+__pycache__/
