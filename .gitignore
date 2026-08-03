@@ -1,0 +1,5 @@
+﻿# Installers / binaries that don't belong in the workflow repo
+*.exe
+
+# ComfyUI run output
+output/

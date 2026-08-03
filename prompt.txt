@@ -1,0 +1,13 @@
+Create a vibrant, high-energy 10-second retail advertisement for a toy store, designed for a large in-store digital display. The scene opens with colorful toy shelves filled with plush toys, action figures, dolls, building blocks, toy cars, and puzzles. Bright, cheerful lighting creates a fun shopping atmosphere.
+
+The camera smoothly glides through the store. Popular toys gently animate with subtle motion, spinning and bouncing to create excitement.
+
+A bold, animated promotional graphic appears perfectly centered in the foreground. It features a single, unified text graphic. The text reads exactly: "20% OFF TOYS". The words are all grouped together in one single design. Do not duplicate the number 20.
+
+The text is giant, bright red with a thick golden outline and a sparkling animation. Confetti, balloons, and colorful ribbons fill the background behind the text, while playful toy blocks bounce around the offer. 
+
+Audio: An energetic, upbeat human male announcer voice reading out loud, "The big toy sale is live right now! Get twenty percent off on all toys!" Accompanied by cheerful, fast-paced background music.
+
+Style: Modern retail commercial, premium quality, perfectly legible typography, colorful, family-friendly, cinematic lighting, smooth camera movement, vibrant colors, highly detailed, energetic motion graphics, seamless looping, 4K UHD, 16:9 landscape.
+
+Negative Prompt: Duplicated text, repeated numbers, multiple 20s, blurry visuals, dark lighting, cluttered layout, unreadable text, misspelled words, gibberish text, low resolution, watermark, distorted toys, excessive motion blur, flickering, crowded text, distracting backgrounds, robotic voice, silent.
