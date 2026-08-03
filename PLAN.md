@@ -145,6 +145,9 @@ Also in this phase:
 
 - **Local server.** Serve the finished ads over HTTP on `127.0.0.1` using the portable
   install's embedded Python (`http.server`) — already present, no new dependency.
+  Note: `SimpleHTTPRequestHandler` does **not** implement HTTP Range requests, which many video
+  players use to seek. The handler needs ~20 lines added to answer `206 Partial Content`, or
+  players may fail to start playback on a partially buffered file.
 - **Stable endpoints**, so the display never needs its URL changed:
   - `GET /latest.mp4` — today's ad
   - `GET /manifest.json` — `{ item, percent, generated_at, duration, url, sha256 }`, so a
@@ -221,13 +224,21 @@ Also in this phase:
 
 ## Implementation language: Python
 
-A migration to an Ubuntu partition is planned, so the pipeline is written in **Python**, not
-PowerShell. It runs unchanged on both, and the portable install already bundles Python 3.13.14,
-so there is nothing to install on Windows today. (The PATH `python` is a broken WindowsApps stub —
-scripts must invoke `python_embeded\python.exe` explicitly, or a real interpreter once on Ubuntu.)
+**Windows only — the Ubuntu migration is cancelled.** Python remains the choice, but on its own
+merits rather than for portability:
+
+- The static file server in Phase 5 is `http.server` from the standard library. The PowerShell
+  equivalent is `HttpListener` boilerplate with hand-rolled MIME and range handling.
+- Every ComfyUI API example and client is Python, including the official websocket progress client.
+- The Claude API call in Phase 1 goes through `urllib` from the standard library, so **nothing
+  needs to be pip-installed** and the ComfyUI environment stays untouched.
+- Number-to-words, alias matching and prompt assembly are all cleaner in Python.
+
+Python 3.13.14 is already bundled with the portable install, so there is nothing to install.
+Scripts must invoke `python_embeded\python.exe` by full path — the `python` on PATH is a broken
+WindowsApps stub.
 
 `set_campaign.ps1` stays as-is for manual one-off prompt edits; it is not part of the pipeline.
 
-**Carry-forward for the Ubuntu move:** the LoRA paths in nodes #4922 and #4968 must switch from
-backslashes to forward slashes, since ComfyUI builds that combo list with `os.sep`. This is the
-exact reverse of the fix in `c8f70fa` — see the README.
+**LoRA paths stay on backslashes permanently.** With the Linux move off the table, the values in
+nodes #4922 and #4968 are correct as committed in `c8f70fa` and need no further attention.

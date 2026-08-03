@@ -38,7 +38,7 @@ Core nodes reference comfy-core up to `0.14.1` / frontend `1.47.10` — use a re
 | `gemma_3_12B_it.safetensors` | `models/text_encoders/` |
 | `ltxv/ltx2/ltx-2.3-22b-distilled-lora-384-1.1.safetensors` | `models/loras/ltxv/ltx2/` |
 
-**LoRA path separators are host-specific — do not "normalize" them.** The `lora_name` widget is a combo that must match ComfyUI's file list *exactly*. That list is built with `os.sep`, so on Windows the value must use backslashes (`ltxv\ltx2\...`, escaped as `\\` in the JSON) and on Linux forward slashes. A mismatch shows up as a red-bordered `Load LoRA` node with an unresolved value. This repo is set up for **Windows**; if you move it to Linux, swap the separators in nodes #4922 and #4968.
+**LoRA path separators are host-specific — do not "normalize" them.** The `lora_name` widget is a combo that must match ComfyUI's file list *exactly*. That list is built with `os.sep`, so on Windows the value must use backslashes (`ltxv\ltx2\...`, escaped as `\\` in the JSON) and on Linux forward slashes. A mismatch shows up as a red-bordered `Load LoRA` node with an unresolved value. This repo targets **Windows**, so backslashes are correct here and should be left alone.
 
 ## How the graph is wired
 
