@@ -5,7 +5,18 @@ Joint audio + video generation on LTX-2.3-22B.
 
 - **[1.LTX_2.3_Workflow.json](1.LTX_2.3_Workflow.json)** — the working workflow. This is the one to load.
 - **[LTX_Video_Workflow.json](LTX_Video_Workflow.json)** — pristine upstream template, kept for reference. Do not edit.
-- **[prompt.txt](prompt.txt)** — positive + negative prompt text. The workflow graph is the source of truth; keep this in sync when you change either text node.
+- **[prompt.txt](prompt.txt)** — positive + negative prompt text, mirrored from the graph for reference.
+- **[set_campaign.ps1](set_campaign.ps1)** — retarget the offer without hand-editing JSON.
+
+## Retargeting the offer
+
+The on-screen graphic is specified as two lines — `SALE` on top, `<N>% OFF ON <PRODUCT>` below. To change the campaign:
+
+```powershell
+.\set_campaign.ps1 -Percent 10 -Product VEGETABLES -Store "grocery store"
+```
+
+It rewrites both text nodes (positive and negative, including the `multiple <N>s` suppression term), spells the percentage out for the voiceover, and validates the JSON before finishing. Reload the workflow in ComfyUI afterwards.
 
 ## Requirements
 
