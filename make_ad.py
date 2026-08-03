@@ -17,6 +17,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -104,9 +105,12 @@ def update_manifest(entry: dict) -> None:
     data["ads"].append(entry)
     data["ads"] = data["ads"][-50:]
     data["current"] = entry
-    MANIFEST.write_text(
+    # Atomic, so a polling client never reads half-written JSON.
+    tmp = MANIFEST.with_suffix(".json.tmp")
+    tmp.write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
+    os.replace(tmp, MANIFEST)
 
 
 def main() -> int:
@@ -188,8 +192,13 @@ def main() -> int:
         return 1
 
     # --- publish ------------------------------------------------------------
+    # Copy to a temp name then os.replace, which is atomic on the same volume.
+    # Writing latest.mp4 in place would let a client mid-download receive a mix
+    # of the old and new file.
     latest = OUT / "latest.mp4"
-    shutil.copy2(final, latest)
+    tmp = OUT / "latest.mp4.tmp"
+    shutil.copy2(final, tmp)
+    os.replace(tmp, latest)
     info = ov.probe(ffmpeg, final)
     update_manifest({
         "item": args.item,
