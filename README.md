@@ -43,6 +43,67 @@ Both honour `COMFY_PYTHON` if the portable install lives somewhere else.
 > directory, not the ComfyUI install, and PowerShell reads a bare relative path as a module
 > name rather than a program — hence `The module 'python_embeded' could not be loaded`.
 
+## Daily ad pipeline
+
+One offer in, one finished ad out:
+
+```powershell
+.\py make_ad.py --item vegetables --percent 20
+```
+
+That resolves the item to a store section, renders a text-free video with a matching
+voiceover (~10 min), composites the on-screen text, validates the result, and publishes to
+`out/`. Add `--label item` to advertise the product rather than the department
+(`20% OFF ON MILK` instead of `20% OFF ON DAIRY`).
+
+| Script | Stage |
+|---|---|
+| [scene.py](scene.py) | item string → scene description, on-screen text, voiceover line |
+| [generate_ad.py](generate_ad.py) | builds the prompt, renders via the ComfyUI API |
+| [overlay.py](overlay.py) | composites the animated text with Pillow + ffmpeg |
+| [make_ad.py](make_ad.py) | all of the above, plus validation and publishing |
+| [serve.py](serve.py) | serves `out/` over HTTP for the display |
+| [comfy_client.py](comfy_client.py) | ComfyUI API client |
+
+Useful flags: `--dry-run` prints the prompt without touching the GPU, `--skip-render`
+re-composites the newest existing render (a two-second loop instead of ten minutes), and
+`--in-model-text` has the model draw the text instead of compositing it.
+
+**Validation blocks publishing.** Duration, dimensions, and a non-silent audio track are
+checked; on failure nothing is published, the reason is printed and the file is kept for
+inspection. An unattended daily job has no human to catch a broken ad.
+
+### Serving it
+
+```powershell
+.\py serve.py                                   # 127.0.0.1:8787, nothing exposed
+```
+
+| Route | Purpose |
+|---|---|
+| `/` | status page with an inline player |
+| `/manifest.json` | current ad metadata incl. `sha256`, so a client can detect a new ad without downloading the video |
+| `/latest.mp4` | current ad under a stable filename — the display's URL never changes |
+| `/ads/<name>.mp4` | dated file, immutable, cached for a year |
+
+The document root is `out/` and only `.mp4` plus `manifest.json` are served. HTTP Range is
+implemented, which `SimpleHTTPRequestHandler` does not do and video players need in order to
+seek.
+
+### Cloudflare tunnel
+
+```powershell
+& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:8787
+```
+
+Prints a `https://<random>.trycloudflare.com` URL. Fine for testing; the hostname changes on
+every restart, so production needs a named tunnel (Cloudflare account + domain).
+
+> **Never tunnel ComfyUI itself (port 8188).** It has no authentication, so anyone with the
+> URL could queue jobs, browse `output/`, and reach files on the host. Only the read-only
+> `out/` server is exposed. If remote *triggering* is needed later, put a small authenticated
+> shim in front and let it talk to ComfyUI over localhost.
+
 ## Retargeting the offer
 
 The on-screen graphic is specified as two lines — `SALE` on top, `<N>% OFF ON <PRODUCT>` below. To change the campaign:
