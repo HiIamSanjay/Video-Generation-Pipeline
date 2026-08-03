@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -258,7 +259,9 @@ def main() -> int:
         print(f"ComfyUI   {sysinfo['comfyui_version']}  ({sysinfo['deploy_environment']})")
         print(f"python    {sysinfo['python_version'].split()[0]}")
         print(f"torch     {sysinfo['pytorch_version']}")
-        print(f"device    {dev['name'].split(':')[1].strip()}")
+        # name looks like "cuda:0 NVIDIA GeForce RTX 5060 Ti : cudaMallocAsync"
+        gpu = re.sub(r"^\w+:\d+\s*", "", dev["name"]).split(" : ")[0].strip()
+        print(f"device    {gpu}")
         print(
             f"vram      {dev['vram_free'] / 2**30:.1f} GiB free "
             f"of {dev['vram_total'] / 2**30:.1f} GiB"

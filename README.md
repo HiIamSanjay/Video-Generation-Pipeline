@@ -8,9 +8,13 @@ The graph currently holds a toys campaign, but that is just the offer loaded rig
 department, the on-screen text and the voiceover all get regenerated per campaign. See
 [PLAN.md](PLAN.md) for the pipeline that drives this from the store API.
 
-> **New here?** Read **[TEACHING.md](TEACHING.md)** — a full walkthrough from first principles:
-> how diffusion works, why the model cannot spell, what every node in the graph does, and why
-> the pipeline is built the way it is. This README is the reference; that is the explanation.
+> **[HOWTORUN.md](HOWTORUN.md)** — just want to make an ad? Start there. Step-by-step commands,
+> expected output, and a troubleshooting table.
+>
+> **[TEACHING.md](TEACHING.md)** — how it all works, from first principles: diffusion, latents,
+> why the model cannot spell, every node in the graph, and why the pipeline is shaped this way.
+>
+> This README is the reference in between.
 
 - **[1.LTX_2.3_Workflow.json](1.LTX_2.3_Workflow.json)** — the working workflow. This is the one to load.
 - **[LTX_Video_Workflow.json](LTX_Video_Workflow.json)** — pristine upstream template, kept for reference. Do not edit.

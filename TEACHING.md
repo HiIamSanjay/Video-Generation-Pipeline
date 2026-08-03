@@ -6,6 +6,9 @@ should be comfortable reading code and using a terminal.
 
 Read it in order the first time. Each part builds on the previous one.
 
+If you only need to *operate* the system rather than understand it, use
+[HOWTORUN.md](HOWTORUN.md) instead.
+
 ---
 
 ## Table of contents
