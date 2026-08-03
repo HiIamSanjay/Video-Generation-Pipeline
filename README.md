@@ -1,7 +1,12 @@
 # video_gen — LTX-2 retail ad workflow
 
-ComfyUI workflow for a 10-second toy-store promo with generated voiceover and music.
-Joint audio + video generation on LTX-2.3-22B.
+ComfyUI workflow for **general-store** daily offer ads — 10 seconds, with generated voiceover
+and music. Joint audio + video generation on LTX-2.3-22B.
+
+One offer per store per day, and the product changes daily: vegetables today, toys tomorrow.
+The graph currently holds a toys campaign, but that is just the offer loaded right now — the
+department, the on-screen text and the voiceover all get regenerated per campaign. See
+[PLAN.md](PLAN.md) for the pipeline that drives this from the store API.
 
 - **[1.LTX_2.3_Workflow.json](1.LTX_2.3_Workflow.json)** — the working workflow. This is the one to load.
 - **[LTX_Video_Workflow.json](LTX_Video_Workflow.json)** — pristine upstream template, kept for reference. Do not edit.
