@@ -22,8 +22,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-HERE = Path(__file__).resolve().parent
-OUT = HERE / "out"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paths  # noqa: E402
+
+OUT = paths.OUT
+PREVIEWS = paths.PREVIEWS
 FONTS = Path("C:/Windows/Fonts")
 
 # Brand palette.
@@ -277,12 +280,13 @@ def main() -> int:
     if args.preview is not None:
         frame = compose_frame(args.preview, (W, H), sprites, timing, bg)
         # Flatten over the real video frame so contrast is judged truthfully.
-        still = HERE / "_preview_bg.png"
+        PREVIEWS.mkdir(parents=True, exist_ok=True)
+        still = PREVIEWS / "_bg.png"
         subprocess.run([ffmpeg, "-y", "-v", "error", "-ss", str(args.preview),
                         "-i", str(video), "-frames:v", "1", str(still)], check=True)
         base = Image.open(still).convert("RGBA")
         base.alpha_composite(frame)
-        dest = args.out or (HERE / f"_preview_{args.preview:g}s.png")
+        dest = args.out or (PREVIEWS / f"preview_{args.preview:g}s.png")
         base.convert("RGB").save(dest)
         still.unlink(missing_ok=True)
         print(f"  -> {dest}")

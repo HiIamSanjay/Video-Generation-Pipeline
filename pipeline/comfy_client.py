@@ -21,12 +21,14 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-DEFAULT_SERVER = "http://127.0.0.1:8188"
-HERE = Path(__file__).resolve().parent
-DEFAULT_WORKFLOW = HERE / "workflow_api.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paths  # noqa: E402
 
-# Node ids in workflow_api.json. Exported from 1.LTX_2.3_Workflow.json; if the
-# graph is ever re-exported after adding or deleting nodes, re-check these.
+DEFAULT_SERVER = "http://127.0.0.1:8188"
+DEFAULT_WORKFLOW = paths.WORKFLOW_API
+
+# Node ids in config/workflow_api.json. Exported from workflows/store_ad.json;
+# if the graph is re-exported after adding or deleting nodes, re-check these.
 NODE = {
     "positive": "2483",   # CLIPTextEncode        .text
     "negative": "2612",   # CLIPTextEncode        .text
@@ -197,8 +199,8 @@ class ComfyClient:
 def load_workflow(path: Path = DEFAULT_WORKFLOW) -> dict:
     if not path.exists():
         raise ComfyError(
-            f"{path.name} not found. Export it from ComfyUI with "
-            "Workflow -> Export (API), from 1.LTX_2.3_Workflow.json."
+            f"{path} not found. Export it from ComfyUI with "
+            "Workflow -> Export (API), from workflows/store_ad.json."
         )
     wf = json.loads(path.read_text(encoding="utf-8"))
     if "nodes" in wf:

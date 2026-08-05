@@ -23,13 +23,11 @@ import shutil
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-RENDERS = HERE / "renders"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paths  # noqa: E402
 
-# ComfyUI's embedded distribution pins sys.path via python313._pth and does not
-# include the script's own directory, so sibling imports need help.
-if str(HERE) not in sys.path:
-    sys.path.insert(0, str(HERE))
+paths.bootstrap()
+RENDERS = paths.RENDERS
 
 import comfy_client as cc  # noqa: E402
 import scene as sc  # noqa: E402

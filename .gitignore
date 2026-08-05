@@ -1,16 +1,14 @@
-﻿# Installers / binaries that don't belong in the workflow repo
-*.exe
+﻿# Generated output
+renders/
+out/
+previews/
 
-# ComfyUI run output
-output/
+# Python
+__pycache__/
+*.pyc
+
+# Installers / binaries that do not belong in the repo
+*.exe
 
 # Local Claude Code settings
 .claude/
-
-# Pipeline artifacts
-out/
-plates/
-__pycache__/
-renders/
-_preview*.png
-_preview_bg.png

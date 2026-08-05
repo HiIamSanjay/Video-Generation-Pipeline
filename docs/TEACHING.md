@@ -7,7 +7,7 @@ should be comfortable reading code and using a terminal.
 Read it in order the first time. Each part builds on the previous one.
 
 If you only need to *operate* the system rather than understand it, use
-[HOWTORUN.md](HOWTORUN.md) instead.
+[HOWTORUN.md](docs/HOWTORUN.md) instead.
 
 ---
 
@@ -410,7 +410,7 @@ Every node has a `mode`:
 ComfyUI has **two** JSON representations of the same graph, and confusing them
 costs an afternoon.
 
-**UI format** (`1.LTX_2.3_Workflow.json`) — what the editor saves. Contains
+**UI format** (`workflows/store_ad.json`) — what the editor saves. Contains
 `nodes` (with canvas positions, sizes, colours, titles), `links`, `groups`,
 `extra`. Human-editable, position-aware.
 
@@ -920,7 +920,7 @@ regional-language ads.*
 
 Roughly increasing difficulty.
 
-1. **Trace the graph.** Open `1.LTX_2.3_Workflow.json` in ComfyUI. Starting at
+1. **Trace the graph.** Open `workflows/store_ad.json` in ComfyUI. Starting at
    the active `SaveVideo`, follow the edges backwards and list every node that
    must execute. Which nodes are unreachable?
 2. **Predict a duration.** What clip length does 481 frames at 24 fps give? Is

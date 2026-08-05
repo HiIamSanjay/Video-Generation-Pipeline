@@ -1,6 +1,6 @@
-<#
+﻿<#
 .SYNOPSIS
-  Retarget the ad's on-screen offer and voiceover in 1.LTX_2.3_Workflow.json.
+  Retarget the ad's on-screen offer and voiceover in workflows/store_ad.json.
 
 .EXAMPLE
   .\set_campaign.ps1 -Percent 10 -Product VEGETABLES -Store "grocery store" -Spoken "ten percent off on all vegetables"
@@ -13,7 +13,7 @@ param(
   [string] $Product = 'TOYS',
   [string] $Store   = 'toy store',
   [string] $Spoken  = '',
-  [string] $Path    = "$PSScriptRoot\1.LTX_2.3_Workflow.json"
+  [string] $Path    = "$PSScriptRoot\..\workflows\store_ad.json"
 )
 $ErrorActionPreference = 'Stop'
 

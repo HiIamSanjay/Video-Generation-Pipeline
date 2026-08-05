@@ -32,8 +32,10 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-OUT = (HERE / "out").resolve()
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paths  # noqa: E402
+
+OUT = paths.OUT.resolve()
 
 SAFE_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
 RANGE_RE = re.compile(r"^bytes=(\d*)-(\d*)$")

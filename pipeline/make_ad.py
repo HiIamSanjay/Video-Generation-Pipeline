@@ -24,18 +24,19 @@ import subprocess
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-if str(HERE) not in sys.path:
-    sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paths  # noqa: E402
+
+paths.bootstrap()
 
 import comfy_client as cc  # noqa: E402
 import generate_ad as ga  # noqa: E402
 import overlay as ov  # noqa: E402
 import scene as sc  # noqa: E402
 
-OUT = HERE / "out"
-RENDERS = HERE / "renders"
-MANIFEST = OUT / "manifest.json"
+OUT = paths.OUT
+RENDERS = paths.RENDERS
+MANIFEST = paths.MANIFEST
 
 # A silent track measures around -91 dB; real audio sits well above -40.
 SILENCE_DB = -50.0

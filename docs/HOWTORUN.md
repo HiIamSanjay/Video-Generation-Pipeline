@@ -1,7 +1,7 @@
 # How to run it
 
 Operational guide. Copy-pasteable, in order. For *why* any of it works, see
-[TEACHING.md](TEACHING.md); for reference detail, see [README.md](README.md).
+[TEACHING.md](docs/TEACHING.md); for reference detail, see [README.md](README.md).
 
 ---
 
@@ -46,7 +46,7 @@ a reinstall or on a new box.
 | Custom nodes | LTXVideo, RES4LYF, KJNodes | ComfyUI Manager, pins in README |
 | ffmpeg | `.\py -c "import shutil"` then `ffmpeg -version` after activate | `winget install Gyan.FFmpeg` |
 | cloudflared | `& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' --version` | `winget install Cloudflare.cloudflared` |
-| `workflow_api.json` | file exists in `video_gen\` | ComfyUI → `Workflow → Export (API)` from `1.LTX_2.3_Workflow.json` |
+| `workflow_api.json` | file exists in `video_gen\` | ComfyUI → `Workflow → Export (API)` from `workflows/store_ad.json` |
 
 You do **not** need to install Python. The pipeline uses the interpreter bundled
 with ComfyUI.
@@ -378,7 +378,7 @@ Nothing is published, and the file is kept so you can look at it. In order:
 | `video_gen\out\` | finished ads, `latest.mp4`, `manifest.json` — this is what is served |
 | `video_gen\items.json` | department library; edit to add sections |
 | `video_gen\workflow_api.json` | the workflow the pipeline submits |
-| `video_gen\1.LTX_2.3_Workflow.json` | the workflow you open in ComfyUI |
+| `video_gen\workflows/store_ad.json` | the workflow you open in ComfyUI |
 | `ComfyUI_windows_portable\ComfyUI\output\` | ComfyUI's own output, before we copy it |
 | `ComfyUI_windows_portable\ComfyUI\models\` | checkpoints, LoRAs, text encoders |
 
@@ -389,7 +389,7 @@ Nothing is published, and the file is kept so you can look at it. In order:
 ## Do not
 
 - **Do not tunnel port 8188.** It has no authentication.
-- **Do not edit `LTX_Video_Workflow.json`.** It is the pristine template.
+- **Do not edit `workflows/upstream_template.json`.** It is the pristine template.
 - **Do not "normalise" the LoRA backslashes.** They are correct for Windows.
 - **Do not run both sampler branches** unless you deliberately want to compare —
   it costs 70 extra minutes per ad.

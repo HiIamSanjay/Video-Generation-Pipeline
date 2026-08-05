@@ -197,7 +197,7 @@ Also in this phase:
   general-store sections plus a `general` aisle fallback. Any unrecognised item still produces a
   working ad; entries get added and tuned as the real item list emerges. Not a blocker.
 - **Double render** — fixed in `2c0eaf5` by muting `SaveVideo` #4823. Only
-  `1.LTX_2.3_Workflow.json` carries the fix; the API export in Phase 0 must come from that file.
+  `workflows/store_ad.json` carries the fix; the API export in Phase 0 must come from that file.
 
 ## Open decisions
 

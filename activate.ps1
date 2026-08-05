@@ -39,8 +39,23 @@ if (-not $ffmpegExe) {
 $ok = $true
 
 if (Test-Path $script:pyPath) {
-  Set-Alias -Name comfy-py -Value $script:pyPath -Scope Global
+  # A function, not an alias, so bare script names resolve against pipeline\
+  # exactly as py.cmd does.
+  $projectRoot = $PSScriptRoot
+  $interpreter = $script:pyPath
+  $body = @"
+param([Parameter(ValueFromRemainingArguments=`$true)]`$Args)
+if (-not `$Args) { Get-ChildItem '$projectRoot\pipeline\*.py' | ForEach-Object { `$_.Name }; return }
+`$script = `$Args[0]
+if (-not (Test-Path `$script)) {
+  `$candidate = Join-Path '$projectRoot\pipeline' `$script
+  if (Test-Path `$candidate) { `$script = `$candidate }
+}
+& '$interpreter' `$script @(`$Args | Select-Object -Skip 1)
+"@
+  Set-Item -Path function:global:comfy-py -Value ([ScriptBlock]::Create($body))
   Write-Host "  comfy-py  -> $script:pyPath" -ForegroundColor DarkGray
+  Write-Host "            (bare script names resolve against pipeline\)" -ForegroundColor DarkGray
 } else {
   Write-Host "  comfy-py  MISSING (looked in $ComfyRoot)" -ForegroundColor Red
   $ok = $false

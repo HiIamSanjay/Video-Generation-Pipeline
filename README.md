@@ -6,20 +6,50 @@ and music. Joint audio + video generation on LTX-2.3-22B.
 One offer per store per day, and the product changes daily: vegetables today, toys tomorrow.
 The graph currently holds a toys campaign, but that is just the offer loaded right now — the
 department, the on-screen text and the voiceover all get regenerated per campaign. See
-[PLAN.md](PLAN.md) for the pipeline that drives this from the store API.
+[PLAN.md](docs/PLAN.md) for the pipeline that drives this from the store API.
 
-> **[HOWTORUN.md](HOWTORUN.md)** — just want to make an ad? Start there. Step-by-step commands,
+> **[HOWTORUN.md](docs/HOWTORUN.md)** — just want to make an ad? Start there. Step-by-step commands,
 > expected output, and a troubleshooting table.
 >
-> **[TEACHING.md](TEACHING.md)** — how it all works, from first principles: diffusion, latents,
+> **[TEACHING.md](docs/TEACHING.md)** — how it all works, from first principles: diffusion, latents,
 > why the model cannot spell, every node in the graph, and why the pipeline is shaped this way.
 >
 > This README is the reference in between.
 
-- **[1.LTX_2.3_Workflow.json](1.LTX_2.3_Workflow.json)** — the working workflow. This is the one to load.
-- **[LTX_Video_Workflow.json](LTX_Video_Workflow.json)** — pristine upstream template, kept for reference. Do not edit.
-- **[prompt.txt](prompt.txt)** — positive + negative prompt text, mirrored from the graph for reference.
-- **[set_campaign.ps1](set_campaign.ps1)** — retarget the offer without hand-editing JSON.
+## Layout
+
+```
+video_gen/
+├── py.cmd              run any pipeline script:  .\py make_ad.py --item milk --percent 30
+├── activate.ps1        optional PowerShell session setup (adds ffmpeg, comfy-py)
+├── pipeline/           the code
+│   ├── paths.py            every path in the project, resolved in one place
+│   ├── scene.py            item string -> scene, on-screen text, voiceover line
+│   ├── generate_ad.py      builds the prompt, renders via the ComfyUI API
+│   ├── overlay.py          composites the animated text (Pillow + ffmpeg)
+│   ├── make_ad.py          all of the above + validation + publishing
+│   ├── serve.py            serves out/ over HTTP for the display
+│   └── comfy_client.py     ComfyUI API client
+├── config/
+│   ├── items.json          department library — edit to add store sections
+│   └── workflow_api.json   the workflow the pipeline submits (API format)
+├── workflows/          ComfyUI graphs, opened in the editor (UI format)
+│   ├── store_ad.json          the working graph — load this one
+│   ├── carerobot_ad.json      separate campaign, driven manually
+│   └── upstream_template.json pristine upstream template. Do not edit.
+├── docs/               HOWTORUN, TEACHING, PLAN
+├── archive/            superseded, kept for history
+├── renders/            raw text-free renders + campaign sidecars   (generated)
+├── out/                finished ads, latest.mp4, manifest.json     (generated)
+└── previews/           single-frame overlay previews               (generated)
+```
+
+`renders/`, `out/` and `previews/` are gitignored — generated and sometimes large.
+
+**Two file formats, easy to confuse.** `workflows/*.json` is the **UI format** you open in
+ComfyUI. `config/workflow_api.json` is the **API format** that `POST /prompt` accepts. They are
+not interchangeable. After editing the graph, re-export with `Workflow → Export (API)` from
+`workflows/store_ad.json`.
 
 ## Running the scripts
 
@@ -67,12 +97,12 @@ voiceover (~10 min), composites the on-screen text, validates the result, and pu
 
 | Script | Stage |
 |---|---|
-| [scene.py](scene.py) | item string → scene description, on-screen text, voiceover line |
-| [generate_ad.py](generate_ad.py) | builds the prompt, renders via the ComfyUI API |
-| [overlay.py](overlay.py) | composites the animated text with Pillow + ffmpeg |
-| [make_ad.py](make_ad.py) | all of the above, plus validation and publishing |
-| [serve.py](serve.py) | serves `out/` over HTTP for the display |
-| [comfy_client.py](comfy_client.py) | ComfyUI API client |
+| [scene.py](pipeline/scene.py) | item string → scene description, on-screen text, voiceover line |
+| [generate_ad.py](pipeline/generate_ad.py) | builds the prompt, renders via the ComfyUI API |
+| [overlay.py](pipeline/overlay.py) | composites the animated text with Pillow + ffmpeg |
+| [make_ad.py](pipeline/make_ad.py) | all of the above, plus validation and publishing |
+| [serve.py](pipeline/serve.py) | serves `out/` over HTTP for the display |
+| [comfy_client.py](pipeline/comfy_client.py) | ComfyUI API client |
 
 Useful flags: `--dry-run` prints the prompt without touching the GPU, `--skip-render`
 re-composites the newest existing render (a two-second loop instead of ten minutes), and
@@ -113,15 +143,15 @@ every restart, so production needs a named tunnel (Cloudflare account + domain).
 > `out/` server is exposed. If remote *triggering* is needed later, put a small authenticated
 > shim in front and let it talk to ComfyUI over localhost.
 
-## Retargeting the offer
+## Archive
 
-The on-screen graphic is specified as two lines — `SALE` on top, `<N>% OFF ON <PRODUCT>` below. To change the campaign:
+`archive/` holds things the pipeline superseded, kept because they document how this got here:
 
-```powershell
-.\set_campaign.ps1 -Percent 10 -Product VEGETABLES -Store "grocery store"
-```
-
-It rewrites both text nodes (positive and negative, including the `multiple <N>s` suppression term), spells the percentage out for the voiceover, and validates the JSON before finishing. Reload the workflow in ComfyUI afterwards.
+| File | Was |
+|---|---|
+| [set_campaign.ps1](archive/set_campaign.ps1) | hand-edited the graph's prompt before `make_ad.py` existed. Still works — it now targets `workflows/store_ad.json` |
+| [prompt.txt](archive/prompt.txt) | the original hand-written prompt, before `scene.py` generated them |
+| `session_2026-08-03_both-branches.json` | a saved editing session with **both sampler branches active**. Loading it gives two videos and an ~80-minute render — kept for reference only |
 
 ## Requirements
 

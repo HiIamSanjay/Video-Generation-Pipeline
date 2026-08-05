@@ -25,8 +25,10 @@ import urllib.request
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-ITEMS_PATH = HERE / "items.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paths  # noqa: E402
+
+ITEMS_PATH = paths.ITEMS
 FALLBACK_KEY = "general"
 
 # Long on-screen lines shrink to fit and get hard to read on a display.
